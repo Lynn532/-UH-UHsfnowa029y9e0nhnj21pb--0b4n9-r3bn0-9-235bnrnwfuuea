@@ -325,7 +325,19 @@
     let deadCount = 0;
     let totalInitialCount = 0; // To keep track of the starting number
     const CHECK_DELAY_MS = 200; // Slightly increased delay for smoother textarea update
+ // Mencegah klik kanan
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            alert('Right-Click Disabled!');
+        });
 
+        // Mencegah F12 (Developer Tools)
+        document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123) { // 123 adalah keyCode untuk F12
+                e.preventDefault();
+                alert('F12 Disabled!');
+            }
+        });
     function toggleDead() {
       const isHidden = deadResultsWrapper.style.display === "none";
       deadResultsWrapper.style.display = isHidden ? "block" : "none";
